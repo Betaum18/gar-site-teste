@@ -75,7 +75,7 @@ const Manual = () => (
     <div className="container mx-auto max-w-3xl">
       <SectionTitle
         title="MANUAL DE CONDUTA"
-        subtitle="Diretrizes e regulamentos internos do Grupamento de Ações Rápidas."
+        subtitle="Diretrizes e regulamentos internos do Grupamento de Acompanhamento Rápido."
       />
 
       <div className="card-tactical mb-8 flex items-start gap-3 border-accent/30">

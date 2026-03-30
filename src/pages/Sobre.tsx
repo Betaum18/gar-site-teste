@@ -23,7 +23,7 @@ const Sobre = () => (
 
       <div className="card-tactical mb-12">
         <p className="text-muted-foreground leading-relaxed">
-          O <span className="text-primary font-semibold">GAR — Grupamento de Ações Rápidas</span> é uma
+          O <span className="text-primary font-semibold">GAR — Grupamento de Acompanhamento Rápido</span> é uma
           unidade de elite especializada em resposta rápida a ocorrências de alta complexidade.
           Com treinamento rigoroso e equipamentos de última geração, nossos agentes estão preparados
           para atuar em qualquer cenário, desde patrulhamento tático até operações especiais de grande escala.
