@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Sobre from "./pages/Sobre";
 import Manual from "./pages/Manual";
 import Inscricao from "./pages/Inscricao";
+import Membros from "./pages/Membros";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
