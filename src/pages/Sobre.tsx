@@ -18,7 +18,7 @@ const Sobre = () => (
     <div className="container mx-auto max-w-4xl">
       <SectionTitle
         title="SOBRE O GAR"
-        subtitle="Conheça o Grupamento de Ações Rápidas — uma unidade fictícia criada para representar o mais alto padrão de operações táticas."
+        subtitle="Conheça o Grupamento de Acompanhamento Rápido — uma unidade fictícia criada para representar o mais alto padrão de operações táticas."
       />
 
       <div className="card-tactical mb-12">
