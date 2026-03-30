@@ -19,7 +19,7 @@ const Home = () => {
 
         <div className="relative z-10 text-center px-4 max-w-4xl">
           <div className="animate-fade-in-up">
-            <Shield className="h-16 w-16 text-primary mx-auto mb-6 drop-shadow-[0_0_15px_hsl(210,100%,55%,0.6)]" />
+            <img src={garLogo} alt="GAR Logo" className="h-28 w-28 mx-auto mb-6 rounded-full drop-shadow-[0_0_20px_hsl(210,100%,55%,0.5)]" />
           </div>
           <h1 className="font-display text-5xl md:text-7xl font-black tracking-[0.2em] text-foreground text-glow-blue animate-fade-in-up animation-delay-100">
             GAR
