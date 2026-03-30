@@ -3,7 +3,7 @@ import SectionTitle from "@/components/SectionTitle";
 
 const values = [
   { icon: Target, title: "Missão", text: "Garantir a segurança pública através de operações táticas de alta performance, atuando com rapidez e precisão em situações de risco elevado." },
-  { icon: Eye, title: "Visão", text: "Ser reconhecido como o grupamento de referência em ações rápidas, inovação tática e excelência operacional." },
+  { icon: Eye, title: "Visão", text: "Ser reconhecido como o grupamento de referência em acompanhamento rápido, inovação tática e excelência operacional." },
   { icon: Heart, title: "Valores", text: "Disciplina, Honra, Lealdade, Respeito à hierarquia, Compromisso com a justiça e Coragem inabalável." },
 ];
 
@@ -18,12 +18,12 @@ const Sobre = () => (
     <div className="container mx-auto max-w-4xl">
       <SectionTitle
         title="SOBRE O GAR"
-        subtitle="Conheça o Grupamento de Ações Rápidas — uma unidade fictícia criada para representar o mais alto padrão de operações táticas."
+        subtitle="Conheça o Grupamento de Acompanhamento Rápido — uma unidade fictícia criada para representar o mais alto padrão de operações táticas."
       />
 
       <div className="card-tactical mb-12">
         <p className="text-muted-foreground leading-relaxed">
-          O <span className="text-primary font-semibold">GAR — Grupamento de Ações Rápidas</span> é uma
+          O <span className="text-primary font-semibold">GAR — Grupamento de Acompanhamento Rápido</span> é uma
           unidade de elite especializada em resposta rápida a ocorrências de alta complexidade.
           Com treinamento rigoroso e equipamentos de última geração, nossos agentes estão preparados
           para atuar em qualquer cenário, desde patrulhamento tático até operações especiais de grande escala.

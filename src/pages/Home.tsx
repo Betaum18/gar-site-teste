@@ -28,7 +28,7 @@ const Home = () => {
             AGILIDADE • DISCIPLINA • HONRA
           </p>
           <p className="text-muted-foreground mt-6 max-w-xl mx-auto text-base md:text-lg animate-fade-in-up animation-delay-300">
-            O Grupamento de Ações Rápidas é uma unidade de elite dedicada à manutenção da ordem
+            O Grupamento de Acompanhamento Rápido é uma unidade de elite dedicada à manutenção da ordem
             pública através de operações táticas de alta precisão.
           </p>
 

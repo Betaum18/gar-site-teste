@@ -21,7 +21,7 @@ const Footer = () => {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Grupamento de Ações Rápidas — Site fictício para fins demonstrativos.
+            Grupamento de Acompanhamento Rápido — Site fictício para fins demonstrativos.
           </p>
 
           <button

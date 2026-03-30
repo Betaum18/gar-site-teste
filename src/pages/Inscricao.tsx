@@ -35,7 +35,7 @@ const Inscricao = () => {
       <div className="container mx-auto max-w-lg">
         <SectionTitle
           title="INSCRIÇÃO"
-          subtitle="Preencha o formulário abaixo para se candidatar ao Grupamento de Ações Rápidas."
+          subtitle="Preencha o formulário abaixo para se candidatar ao Grupamento de Acompanhamento Rápido."
         />
 
         <form onSubmit={handleSubmit} className="card-tactical space-y-5 border-glow-blue">
