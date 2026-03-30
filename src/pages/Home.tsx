@@ -37,7 +37,7 @@ const Home = () => {
               to="/sobre"
               className="flex items-center gap-2 px-6 py-3 rounded-md bg-secondary text-secondary-foreground font-medium text-sm transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_hsl(210,100%,55%,0.3)]"
             >
-              <Shield size={16} /> Sobre
+              <img src={garLogo} alt="GAR" className="h-4 w-4 rounded-full" /> Sobre
             </Link>
             <Link
               to="/manual"
