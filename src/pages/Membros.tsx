@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SectionTitle from "@/components/SectionTitle";
@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserPlus, User, Trash2 } from "lucide-react";
+import { UserPlus, User, Trash2, LogIn, LogOut, Lock } from "lucide-react";
 import { toast } from "sonner";
+import type { Session } from "@supabase/supabase-js";
 
 const ROLES = [
   "COMANDO",
@@ -23,11 +24,26 @@ const ROLES = [
 
 const Membros = () => {
   const queryClient = useQueryClient();
+  const [session, setSession] = useState<Session | null>(null);
   const [open, setOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const isAdmin = !!session;
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["members"],
@@ -45,7 +61,6 @@ const Membros = () => {
   const addMember = useMutation({
     mutationFn: async () => {
       let photo_url: string | null = null;
-
       if (photoFile) {
         const ext = photoFile.name.split(".").pop();
         const fileName = `${crypto.randomUUID()}.${ext}`;
@@ -53,13 +68,11 @@ const Membros = () => {
           .from("member-photos")
           .upload(fileName, photoFile);
         if (uploadError) throw uploadError;
-
         const { data: urlData } = supabase.storage
           .from("member-photos")
           .getPublicUrl(fileName);
         photo_url = urlData.publicUrl;
       }
-
       const { error } = await supabase.from("members").insert({
         name,
         role,
@@ -91,6 +104,25 @@ const Membros = () => {
     },
   });
 
+  const handleLogin = async () => {
+    setLoginLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoginLoading(false);
+    if (error) {
+      toast.error("Credenciais inválidas.");
+    } else {
+      toast.success("Login realizado!");
+      setLoginOpen(false);
+      setEmail("");
+      setPassword("");
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logout realizado.");
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -107,80 +139,95 @@ const Membros = () => {
           subtitle="Efetivo atual do Grupamento de Acompanhamento Rápido."
         />
 
-        <div className="flex justify-center mb-10">
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <UserPlus size={18} />
-                Cadastrar Membro
+        <div className="flex justify-center gap-3 mb-10">
+          {isAdmin ? (
+            <>
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <UserPlus size={18} />
+                    Cadastrar Membro
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card border-border">
+                  <DialogHeader>
+                    <DialogTitle className="font-display tracking-wide">Novo Membro</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <div className="flex flex-col items-center gap-3">
+                      <Avatar className="h-20 w-20 border-2 border-primary/30">
+                        {photoPreview ? (
+                          <AvatarImage src={photoPreview} alt="Preview" />
+                        ) : (
+                          <AvatarFallback className="bg-primary/20 text-primary">
+                            <User size={32} />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <Label htmlFor="photo" className="cursor-pointer text-sm text-primary hover:underline">
+                        {photoPreview ? "Alterar foto" : "Adicionar foto"}
+                      </Label>
+                      <input id="photo" type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nome</Label>
+                      <Input id="name" placeholder="Nome do membro" value={name} onChange={(e) => setName(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Cargo</Label>
+                      <Select value={role} onValueChange={setRole}>
+                        <SelectTrigger><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
+                        <SelectContent>
+                          {ROLES.map((r) => (
+                            <SelectItem key={r} value={r}>{r}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button className="w-full" disabled={!name || !role || addMember.isPending} onClick={() => addMember.mutate()}>
+                      {addMember.isPending ? "Salvando..." : "Salvar"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Button variant="outline" className="gap-2" onClick={handleLogout}>
+                <LogOut size={16} />
+                Sair
               </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border-border">
-              <DialogHeader>
-                <DialogTitle className="font-display tracking-wide">Novo Membro</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div className="flex flex-col items-center gap-3">
-                  <Avatar className="h-20 w-20 border-2 border-primary/30">
-                    {photoPreview ? (
-                      <AvatarImage src={photoPreview} alt="Preview" />
-                    ) : (
-                      <AvatarFallback className="bg-primary/20 text-primary">
-                        <User size={32} />
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <Label
-                    htmlFor="photo"
-                    className="cursor-pointer text-sm text-primary hover:underline"
-                  >
-                    {photoPreview ? "Alterar foto" : "Adicionar foto"}
-                  </Label>
-                  <input
-                    id="photo"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
-                  <Input
-                    id="name"
-                    placeholder="Nome do membro"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="role">Cargo</Label>
-                  <Select value={role} onValueChange={setRole}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o cargo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROLES.map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button
-                  className="w-full"
-                  disabled={!name || !role || addMember.isPending}
-                  onClick={() => addMember.mutate()}
-                >
-                  {addMember.isPending ? "Salvando..." : "Salvar"}
+            </>
+          ) : (
+            <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Lock size={16} />
+                  Área Administrativa
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border">
+                <DialogHeader>
+                  <DialogTitle className="font-display tracking-wide flex items-center gap-2">
+                    <LogIn size={20} /> Login Administrativo
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-mail</Label>
+                    <Input id="email" type="email" placeholder="admin@gar.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Senha</Label>
+                    <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                    />
+                  </div>
+                  <Button className="w-full" disabled={!email || !password || loginLoading} onClick={handleLogin}>
+                    {loginLoading ? "Entrando..." : "Entrar"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {isLoading ? (
@@ -190,24 +237,20 @@ const Membros = () => {
             ))}
           </div>
         ) : members.length === 0 ? (
-          <p className="text-center text-muted-foreground">
-            Nenhum membro cadastrado ainda.
-          </p>
+          <p className="text-center text-muted-foreground">Nenhum membro cadastrado ainda.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {members.map((member) => (
-              <div
-                key={member.id}
-                className="card-tactical border-glow-blue text-center group hover:border-primary/40 transition-all relative"
-              >
-                <button
-                  onClick={() => deleteMember.mutate(member.id)}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                  title="Remover membro"
-                >
-                  <Trash2 size={16} />
-                </button>
-
+              <div key={member.id} className="card-tactical border-glow-blue text-center group hover:border-primary/40 transition-all relative">
+                {isAdmin && (
+                  <button
+                    onClick={() => deleteMember.mutate(member.id)}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                    title="Remover membro"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
                 <div className="flex justify-center mb-4">
                   <Avatar className="h-20 w-20 border-2 border-primary/30">
                     {member.photo_url ? (
@@ -219,13 +262,8 @@ const Membros = () => {
                     )}
                   </Avatar>
                 </div>
-
-                <h3 className="font-display text-sm font-semibold tracking-wide text-primary mb-1">
-                  {member.name}
-                </h3>
-                <p className="text-xs font-bold tracking-wider text-accent">
-                  {member.role}
-                </p>
+                <h3 className="font-display text-sm font-semibold tracking-wide text-primary mb-1">{member.name}</h3>
+                <p className="text-xs font-bold tracking-wider text-accent">{member.role}</p>
               </div>
             ))}
           </div>
