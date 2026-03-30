@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Shield, BookOpen, UserPlus, Crosshair, Radio, Car } from "lucide-react";
+import { BookOpen, UserPlus, Crosshair, Radio, Car } from "lucide-react";
 import heroBanner from "@/assets/hero-banner.jpg";
+import garLogo from "@/assets/gar-logo.png";
 
 const Home = () => {
   return (

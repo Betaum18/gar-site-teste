@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Shield, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import garLogo from "@/assets/gar-logo.png";
 
 const navItems = [
   { label: "Início", path: "/" },
