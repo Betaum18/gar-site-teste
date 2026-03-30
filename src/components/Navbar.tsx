@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Shield, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import garLogo from "@/assets/gar-logo.png";
 
 const navItems = [
   { label: "Início", path: "/" },
@@ -17,7 +18,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
         <Link to="/" className="flex items-center gap-2 group">
-          <Shield className="h-7 w-7 text-primary transition-all group-hover:drop-shadow-[0_0_8px_hsl(210,100%,55%)]" />
+          <img src={garLogo} alt="GAR Logo" className="h-9 w-9 rounded-full transition-all group-hover:drop-shadow-[0_0_8px_hsl(210,100%,55%)]" />
           <span className="font-display text-xl font-bold tracking-widest text-foreground">
             GAR
           </span>
