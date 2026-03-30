@@ -3,7 +3,7 @@ import SectionTitle from "@/components/SectionTitle";
 
 const values = [
   { icon: Target, title: "Missão", text: "Garantir a segurança pública através de operações táticas de alta performance, atuando com rapidez e precisão em situações de risco elevado." },
-  { icon: Eye, title: "Visão", text: "Ser reconhecido como o grupamento de referência em ações rápidas, inovação tática e excelência operacional." },
+  { icon: Eye, title: "Visão", text: "Ser reconhecido como o grupamento de referência em acompanhamento rápido, inovação tática e excelência operacional." },
   { icon: Heart, title: "Valores", text: "Disciplina, Honra, Lealdade, Respeito à hierarquia, Compromisso com a justiça e Coragem inabalável." },
 ];
 
