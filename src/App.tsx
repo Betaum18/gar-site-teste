@@ -10,6 +10,7 @@ import Sobre from "./pages/Sobre";
 import Manual from "./pages/Manual";
 import Inscricao from "./pages/Inscricao";
 import Membros from "./pages/Membros";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/manual" element={<Manual />} />
           <Route path="/inscricao" element={<Inscricao />} />
           <Route path="/membros" element={<Membros />} />
+          <Route path="/login" element={<Login />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
