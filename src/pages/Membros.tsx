@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { UserPlus, Trash2, LogOut, Lock, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { getMembers, addMember, deleteMember, logout } from "@/services/api";
-import { userIsAdmin, getToken, clearSession } from "@/services/auth";
+import { isAdmin, getToken, clearSession } from "@/services/auth";
 
 const ROLES = [
   "COMANDO",
