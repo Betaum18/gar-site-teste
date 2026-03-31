@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, LogIn, LogOut } from "lucide-react";
 import garLogo from "@/assets/gar-logo.png";
-import { isLoggedIn, getUserName, getToken, clearSession } from "@/services/auth";
+import { isLoggedIn, isAdmin, getUserName, getToken, clearSession } from "@/services/auth";
 import { logout } from "@/services/api";
 
 const navItems = [
@@ -21,8 +21,9 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   // Re-reads on every render (re-renders on route change via useLocation)
-  const loggedIn = isLoggedIn();
-  const userName = getUserName();
+  const loggedIn  = isLoggedIn();
+  const userAdmin = isAdmin();
+  const userName  = getUserName();
 
   const handleLogout = async () => {
     const token = getToken();
@@ -59,6 +60,18 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+          {userAdmin && (
+            <Link
+              to="/usuarios"
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:bg-secondary hover:text-primary ${
+                location.pathname === "/usuarios"
+                  ? "text-primary bg-secondary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Usuários
+            </Link>
+          )}
 
           {/* Auth button */}
           {loggedIn ? (
@@ -112,6 +125,19 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+          {userAdmin && (
+            <Link
+              to="/usuarios"
+              onClick={() => setOpen(false)}
+              className={`block px-6 py-3 text-sm font-medium transition-colors hover:bg-secondary ${
+                location.pathname === "/usuarios"
+                  ? "text-primary bg-secondary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Usuários
+            </Link>
+          )}
 
           {/* Mobile auth */}
           {loggedIn ? (

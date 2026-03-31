@@ -84,7 +84,7 @@ const Usuarios = () => {
         <div className="flex justify-center mb-10">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2" disabled={availableMembers.length === 0}>
+              <Button className="gap-2">
                 <UserPlus size={18} />
                 Novo Usuário
               </Button>
@@ -94,47 +94,61 @@ const Usuarios = () => {
                 <DialogTitle className="font-display tracking-wide">Criar Usuário</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-2">
-                <div className="space-y-2">
-                  <Label>Membro</Label>
-                  <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o membro" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableMembers.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.name} — {m.role}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="username">Usuário</Label>
-                  <Input
-                    id="username"
-                    placeholder="nome de usuário"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <Button
-                  className="w-full"
-                  disabled={!selectedMemberId || !username || !password || addUserMutation.isPending}
-                  onClick={() => addUserMutation.mutate()}
-                >
-                  {addUserMutation.isPending ? "Criando..." : "Criar"}
-                </Button>
+                {members.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Cadastre membros na página{" "}
+                    <a href="/membros" className="text-primary hover:underline">/membros</a>{" "}
+                    antes de criar usuários.
+                  </p>
+                ) : availableMembers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Todos os membros já possuem acesso ao sistema.
+                  </p>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Membro</Label>
+                      <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o membro" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableMembers.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.name} — {m.role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Usuário</Label>
+                      <Input
+                        id="username"
+                        placeholder="nome de usuário"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Senha</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      className="w-full"
+                      disabled={!selectedMemberId || !username || !password || addUserMutation.isPending}
+                      onClick={() => addUserMutation.mutate()}
+                    >
+                      {addUserMutation.isPending ? "Criando..." : "Criar"}
+                    </Button>
+                  </>
+                )}
               </div>
             </DialogContent>
           </Dialog>

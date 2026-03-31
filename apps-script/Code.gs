@@ -109,7 +109,7 @@ function getUsers(params) {
   var session = validateToken(params.token);
   if (!session.valid || session.user_type !== "admin") return { error: "Unauthorized" };
   var sheet = SS.getSheetByName("Usuarios");
-  if (sheet.getLastRow() < 2) return { users: [] };
+  if (!sheet || sheet.getLastRow() < 2) return { users: [] };
   var data = sheet.getDataRange().getValues();
   var headers = data[0]; // id | member_id | member_name | username | password | created_at
   var users = [];
@@ -133,6 +133,7 @@ function addUser(params) {
   if (!member_id || !username || !password) return { error: "member_id, username e password são obrigatórios" };
 
   var sheet = SS.getSheetByName("Usuarios");
+  if (!sheet) return { error: "Aba 'Usuarios' não encontrada na planilha" };
   if (sheet.getLastRow() >= 2) {
     var existing = sheet.getDataRange().getValues();
     for (var i = 1; i < existing.length; i++) {
@@ -152,7 +153,7 @@ function deleteUser(params) {
   var id = params.id;
   if (!id) return { error: "id é obrigatório" };
   var sheet = SS.getSheetByName("Usuarios");
-  if (sheet.getLastRow() < 2) return { error: "Usuário não encontrado" };
+  if (!sheet || sheet.getLastRow() < 2) return { error: "Usuário não encontrado" };
   var data = sheet.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][0]) === String(id)) { sheet.deleteRow(i + 1); return { success: true }; }
@@ -180,16 +181,17 @@ function addOcorrencia(params) {
   var photo_url = (params.photo_url || "").trim();
   if (!descricao) return { error: "descricao é obrigatória" };
 
+  var sheet = SS.getSheetByName("Ocorrencias");
+  if (!sheet) return { error: "Aba 'Ocorrencias' não encontrada na planilha" };
   var id  = Utilities.getUuid();
   var now = new Date().toISOString();
-  var sheet = SS.getSheetByName("Ocorrencias");
   sheet.appendRow([id, member_id, member_name, descricao, photo_url, now]);
   return { success: true, ocorrencia: { id: id, member_id: member_id, member_name: member_name, descricao: descricao, photo_url: photo_url, created_at: now } };
 }
 
 function getOcorrencias(params) {
   var sheet = SS.getSheetByName("Ocorrencias");
-  if (sheet.getLastRow() < 2) return { ocorrencias: [], ranking: [] };
+  if (!sheet || sheet.getLastRow() < 2) return { ocorrencias: [], ranking: [] };
 
   var month = params.month ? parseInt(params.month) : 0;
   var year  = params.year  ? parseInt(params.year)  : 0;
@@ -203,8 +205,10 @@ function getOcorrencias(params) {
     var o = {};
     for (var j = 0; j < headers.length; j++) o[headers[j]] = data[i][j];
     if (month && year) {
-      var d = new Date(o.created_at);
-      if ((d.getMonth() + 1) !== month || d.getFullYear() !== year) continue;
+      var rawDate = o.created_at;
+      var d = (rawDate instanceof Date) ? rawDate : new Date(String(rawDate));
+      if (isNaN(d.getTime())) continue;
+      if ((d.getUTCMonth() + 1) !== month || d.getUTCFullYear() !== year) continue;
     }
     ocorrencias.push(o);
   }
@@ -220,7 +224,7 @@ function getOcorrencias(params) {
 
   // Enriquecer com foto do membro
   var membrosSheet = SS.getSheetByName("Membros");
-  if (membrosSheet.getLastRow() >= 2) {
+  if (membrosSheet && membrosSheet.getLastRow() >= 2) {
     var mData    = membrosSheet.getDataRange().getValues();
     var mHeaders = mData[0];
     for (var mi = 1; mi < mData.length; mi++) {
@@ -245,7 +249,7 @@ function deleteOcorrencia(params) {
   var id = params.id;
   if (!id) return { error: "id é obrigatório" };
   var sheet = SS.getSheetByName("Ocorrencias");
-  if (sheet.getLastRow() < 2) return { error: "Ocorrência não encontrada" };
+  if (!sheet || sheet.getLastRow() < 2) return { error: "Ocorrência não encontrada" };
   var data = sheet.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][0]) === String(id)) { sheet.deleteRow(i + 1); return { success: true }; }
@@ -262,7 +266,7 @@ function loginHandler(params) {
 
   // 1. Tentar login de membro
   var uSheet = SS.getSheetByName("Usuarios");
-  if (uSheet.getLastRow() >= 2) {
+  if (uSheet && uSheet.getLastRow() >= 2) {
     var uData = uSheet.getDataRange().getValues();
     // colunas: id | member_id | member_name | username | password | created_at
     for (var i = 1; i < uData.length; i++) {
@@ -285,6 +289,7 @@ function createSession(user_type, user_id, user_name) {
   var token      = Utilities.getUuid();
   var expires_at = new Date(Date.now() + TOKEN_EXPIRY_MS).toISOString();
   var sheet = SS.getSheetByName("Sessions");
+  if (!sheet) return { error: "Aba 'Sessions' não encontrada na planilha" };
   cleanSessions(sheet);
   sheet.appendRow([token, expires_at, user_type, user_id, user_name]);
   return { success: true, token: token, expires_at: expires_at, user_type: user_type, user_id: user_id, user_name: user_name };
@@ -307,7 +312,7 @@ function validateToken(token) {
   var invalid = { valid: false, user_type: "", user_id: "", user_name: "" };
   if (!token) return invalid;
   var sheet = SS.getSheetByName("Sessions");
-  if (sheet.getLastRow() < 2) return invalid;
+  if (!sheet || sheet.getLastRow() < 2) return invalid;
   var data = sheet.getDataRange().getValues();
   var now  = new Date();
   for (var i = 1; i < data.length; i++) {
