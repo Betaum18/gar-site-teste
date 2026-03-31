@@ -67,7 +67,7 @@ const Membros = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const userIsAdmin = userIsAdmin();
+  const userIsAdmin = isAdmin();
 
   // Ctrl+V paste listener (only when dialog is open)
   useEffect(() => {

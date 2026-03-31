@@ -16,7 +16,7 @@ const Login = () => {
 
   useEffect(() => {
     if (!isLoggedIn()) return;
-    navigate(isAdmin() ? "/membros" : "/metas", { replace: true });
+    navigate(isAdmin() ? "/" : "/metas", { replace: true });
   }, [navigate]);
 
   const handleSubmit = async () => {
