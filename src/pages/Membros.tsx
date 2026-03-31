@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { UserPlus, Trash2, LogOut, Lock, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { getMembers, addMember, deleteMember, logout } from "@/services/api";
-import { isLoggedIn, getToken, clearSession } from "@/services/auth";
+import { userIsAdmin, getToken, clearSession } from "@/services/auth";
 
 const ROLES = [
   "COMANDO",
@@ -67,7 +67,7 @@ const Membros = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isAdmin = isLoggedIn();
+  const userIsAdmin = userIsAdmin();
 
   // Ctrl+V paste listener (only when dialog is open)
   useEffect(() => {
@@ -158,7 +158,7 @@ const Membros = () => {
         />
 
         <div className="flex justify-center gap-3 mb-10">
-          {isAdmin ? (
+          {userIsAdmin ? (
             <>
               <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
                 <DialogTrigger asChild>
@@ -280,7 +280,7 @@ const Membros = () => {
                 key={member.id}
                 className="card-tactical border-glow-blue text-center group hover:border-primary/40 transition-all relative"
               >
-                {isAdmin && (
+                {userIsAdmin && (
                   <button
                     onClick={() => deleteMemberMutation.mutate(member.id)}
                     className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"

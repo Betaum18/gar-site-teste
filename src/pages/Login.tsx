@@ -22,8 +22,8 @@ const Login = () => {
     if (!username || !password || loading) return;
     setLoading(true);
     try {
-      const { token, expires_at } = await login(username, password);
-      saveSession(token, expires_at);
+      const { token, expires_at, user_type, user_id, user_name } = await login(username, password);
+      saveSession(token, expires_at, user_type, user_id, user_name);
       toast.success("Login realizado!");
       navigate("/membros", { replace: true });
     } catch {
