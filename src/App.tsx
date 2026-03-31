@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Usuarios from "./pages/Usuarios";
 import Metas from "./pages/Metas";
 import Dashboard from "./pages/Dashboard";
+import Crimes from "./pages/Crimes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/usuarios" element={<Usuarios />} />
           <Route path="/metas" element={<Metas />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/crimes" element={<Crimes />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
