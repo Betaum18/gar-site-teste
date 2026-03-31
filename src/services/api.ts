@@ -59,6 +59,12 @@ export async function addMember(
   return data.member as Member;
 }
 
+export async function editMember(
+  id: string, name: string, role: string, photo_url: string, token: string
+): Promise<void> {
+  await apiFetch({ action: "editMember", id, name, role, photo_url, token });
+}
+
 export async function deleteMember(id: string, token: string): Promise<void> {
   await apiFetch({ action: "deleteMember", id, token });
 }
@@ -75,6 +81,14 @@ export async function addUser(
 ): Promise<UserEntry> {
   const data = await apiFetch({ action: "addUser", token, member_id, member_name, username, password, user_type });
   return data.user as UserEntry;
+}
+
+export async function editUser(
+  token: string, id: string, username: string, password: string, user_type: string
+): Promise<void> {
+  const params: Record<string, string> = { action: "editUser", token, id, username, user_type };
+  if (password) params.password = password;
+  await apiFetch(params);
 }
 
 export async function deleteUser(token: string, id: string): Promise<void> {

@@ -32,9 +32,11 @@ function handleRequest(e) {
     switch (action) {
       case "getMembers":       return respond(getMembers());
       case "addMember":        return respond(addMember(params));
+      case "editMember":       return respond(editMember(params));
       case "deleteMember":     return respond(deleteMember(params));
       case "getUsers":         return respond(getUsers(params));
       case "addUser":          return respond(addUser(params));
+      case "editUser":         return respond(editUser(params));
       case "deleteUser":       return respond(deleteUser(params));
       case "login":            return respond(loginHandler(params));
       case "logout":           return respond(logoutHandler(params));
@@ -89,6 +91,29 @@ function addMember(params) {
   var now = new Date().toISOString();
   sheet.appendRow([id, name, role, photo_url, display_order, now]);
   return { success: true, member: { id: id, name: name, role: role, photo_url: photo_url, display_order: display_order, created_at: now } };
+}
+
+function editMember(params) {
+  var session = validateToken(params.token);
+  if (!session.valid || session.user_type !== "admin") return { error: "Unauthorized" };
+  var id        = params.id;
+  var name      = (params.name      || "").trim();
+  var role      = (params.role      || "").trim();
+  var photo_url = (params.photo_url || "").trim();
+  if (!id || !name || !role) return { error: "id, name e role são obrigatórios" };
+  var sheet = SS.getSheetByName("Membros");
+  if (!sheet) return { error: "Aba 'Membros' não encontrada na planilha" };
+  var data = sheet.getDataRange().getValues();
+  // colunas: id(0) | name(1) | role(2) | photo_url(3) | display_order(4) | created_at(5)
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(id)) {
+      sheet.getRange(i + 1, 2).setValue(name);
+      sheet.getRange(i + 1, 3).setValue(role);
+      sheet.getRange(i + 1, 4).setValue(photo_url);
+      return { success: true };
+    }
+  }
+  return { error: "Membro não encontrado" };
 }
 
 function deleteMember(params) {
@@ -148,6 +173,35 @@ function addUser(params) {
   var now = new Date().toISOString();
   sheet.appendRow([id, member_id, member_name, username, password, user_type, now]);
   return { success: true, user: { id: id, member_id: member_id, member_name: member_name, username: username, user_type: user_type, created_at: now } };
+}
+
+function editUser(params) {
+  var session = validateToken(params.token);
+  if (!session.valid || session.user_type !== "admin") return { error: "Unauthorized" };
+  var id        = params.id;
+  var username  = (params.username  || "").trim();
+  var user_type = (params.user_type === "admin") ? "admin" : "member";
+  if (!id || !username) return { error: "id e username são obrigatórios" };
+  var sheet = SS.getSheetByName("Usuarios");
+  if (!sheet || sheet.getLastRow() < 2) return { error: "Usuário não encontrado" };
+  var data = sheet.getDataRange().getValues();
+  // colunas: id(0) | member_id(1) | member_name(2) | username(3) | password(4) | user_type(5) | created_at(6)
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) !== String(id) && String(data[i][3]) === username) {
+      return { error: "Username já em uso" };
+    }
+  }
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(id)) {
+      sheet.getRange(i + 1, 4).setValue(username);
+      if (params.password && params.password.trim()) {
+        sheet.getRange(i + 1, 5).setValue(params.password.trim());
+      }
+      sheet.getRange(i + 1, 6).setValue(user_type);
+      return { success: true };
+    }
+  }
+  return { error: "Usuário não encontrado" };
 }
 
 function deleteUser(params) {

@@ -8,19 +8,27 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, Trash2, ShieldCheck } from "lucide-react";
+import { UserPlus, Trash2, ShieldCheck, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { getUsers, addUser, deleteUser, getMembers } from "@/services/api";
+import { getUsers, addUser, editUser, deleteUser, getMembers, type UserEntry } from "@/services/api";
 import { isLoggedIn, isAdmin, getToken } from "@/services/auth";
 
 const Usuarios = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // ---- Add dialog ----
   const [open, setOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isAdminUser, setIsAdminUser] = useState(false);
+
+  // ---- Edit dialog ----
+  const [editingUser, setEditingUser] = useState<UserEntry | null>(null);
+  const [editUsername, setEditUsername] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [editIsAdmin, setEditIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn()) { navigate("/login", { replace: true }); return; }
@@ -41,12 +49,25 @@ const Usuarios = () => {
     enabled: isAdmin(),
   });
 
-  // Members that don't already have a user account
   const availableMembers = members.filter(
     (m) => !users.some((u) => u.member_id === m.id)
   );
 
   const selectedMember = members.find((m) => m.id === selectedMemberId);
+
+  const openEdit = (user: UserEntry) => {
+    setEditingUser(user);
+    setEditUsername(user.username);
+    setEditPassword("");
+    setEditIsAdmin(user.user_type === "admin");
+  };
+
+  const closeEdit = () => {
+    setEditingUser(null);
+    setEditUsername("");
+    setEditPassword("");
+    setEditIsAdmin(false);
+  };
 
   const addUserMutation = useMutation({
     mutationFn: () =>
@@ -54,13 +75,21 @@ const Usuarios = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       setOpen(false);
-      setSelectedMemberId("");
-      setUsername("");
-      setPassword("");
-      setIsAdminUser(false);
+      setSelectedMemberId(""); setUsername(""); setPassword(""); setIsAdminUser(false);
       toast.success("Usuário criado com sucesso!");
     },
     onError: (err: Error) => toast.error(err.message || "Erro ao criar usuário."),
+  });
+
+  const editUserMutation = useMutation({
+    mutationFn: () =>
+      editUser(token, editingUser!.id, editUsername, editPassword, editIsAdmin ? "admin" : "member"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      closeEdit();
+      toast.success("Usuário atualizado!");
+    },
+    onError: (err: Error) => toast.error(err.message || "Erro ao atualizar usuário."),
   });
 
   const deleteUserMutation = useMutation({
@@ -87,10 +116,7 @@ const Usuarios = () => {
         <div className="flex justify-center mb-10">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
-                <UserPlus size={18} />
-                Novo Usuário
-              </Button>
+              <Button className="gap-2"><UserPlus size={18} />Novo Usuário</Button>
             </DialogTrigger>
             <DialogContent className="bg-card border-border">
               <DialogHeader>
@@ -112,43 +138,24 @@ const Usuarios = () => {
                     <div className="space-y-2">
                       <Label>Membro</Label>
                       <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o membro" />
-                        </SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder="Selecione o membro" /></SelectTrigger>
                         <SelectContent>
                           {availableMembers.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.name} — {m.role}
-                            </SelectItem>
+                            <SelectItem key={m.id} value={m.id}>{m.name} — {m.role}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="username">Usuário</Label>
-                      <Input
-                        id="username"
-                        placeholder="nome de usuário"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                      />
+                      <Input id="username" placeholder="nome de usuário" value={username} onChange={(e) => setUsername(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Senha</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
+                      <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
                     </div>
                     <div className="flex items-center gap-3 py-1">
-                      <Checkbox
-                        id="is-admin"
-                        checked={isAdminUser}
-                        onCheckedChange={(v) => setIsAdminUser(v === true)}
-                      />
+                      <Checkbox id="is-admin" checked={isAdminUser} onCheckedChange={(v) => setIsAdminUser(v === true)} />
                       <Label htmlFor="is-admin" className="cursor-pointer flex items-center gap-1.5">
                         <ShieldCheck size={14} className="text-primary" />
                         Administrador
@@ -167,6 +174,45 @@ const Usuarios = () => {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Edit dialog */}
+        <Dialog open={!!editingUser} onOpenChange={(v) => { if (!v) closeEdit(); }}>
+          <DialogContent className="bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="font-display tracking-wide">
+                Editar Usuário — {editingUser?.member_name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-username">Usuário</Label>
+                <Input id="edit-username" placeholder="nome de usuário" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-password">Nova senha</Label>
+                <Input
+                  id="edit-password" type="password"
+                  placeholder="Deixe em branco para manter a atual"
+                  value={editPassword} onChange={(e) => setEditPassword(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-3 py-1">
+                <Checkbox id="edit-is-admin" checked={editIsAdmin} onCheckedChange={(v) => setEditIsAdmin(v === true)} />
+                <Label htmlFor="edit-is-admin" className="cursor-pointer flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-primary" />
+                  Administrador
+                </Label>
+              </div>
+              <Button
+                className="w-full"
+                disabled={!editUsername || editUserMutation.isPending}
+                onClick={() => editUserMutation.mutate()}
+              >
+                {editUserMutation.isPending ? "Salvando..." : "Salvar alterações"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {isLoading ? (
           <div className="space-y-3">
@@ -199,13 +245,22 @@ const Usuarios = () => {
                     @{user.username} · criado em {formatDate(String(user.created_at))}
                   </p>
                 </div>
-                <button
-                  onClick={() => deleteUserMutation.mutate(user.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                  title="Remover usuário"
-                >
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => openEdit(user)}
+                    className="text-muted-foreground hover:text-primary"
+                    title="Editar usuário"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    onClick={() => deleteUserMutation.mutate(user.id)}
+                    className="text-muted-foreground hover:text-destructive"
+                    title="Remover usuário"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
