@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SectionTitle from "@/components/SectionTitle";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserPlus, Trash2, LogOut, Lock } from "lucide-react";
+import { UserPlus, Trash2, LogOut, Lock, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { getMembers, addMember, deleteMember, logout } from "@/services/api";
 import { isLoggedIn, getToken, clearSession } from "@/services/auth";
@@ -33,6 +33,30 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
+async function compressImage(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const MAX = 200;
+      let { width, height } = img;
+      if (width > height) {
+        if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+      } else {
+        if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 const Membros = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -40,8 +64,55 @@ const Membros = () => {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = isLoggedIn();
+
+  // Ctrl+V paste listener (only when dialog is open)
+  useEffect(() => {
+    if (!open) return;
+    const handlePaste = async (e: ClipboardEvent) => {
+      const item = Array.from(e.clipboardData?.items ?? []).find((i) =>
+        i.type.startsWith("image/")
+      );
+      if (!item) return;
+      const blob = item.getAsFile();
+      if (!blob) return;
+      try {
+        setPhotoUrl(await compressImage(blob));
+      } catch {
+        toast.error("Não foi possível processar a imagem.");
+      }
+    };
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [open]);
+
+  const handleImageFile = async (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Arquivo não é uma imagem.");
+      return;
+    }
+    try {
+      setPhotoUrl(await compressImage(file));
+    } catch {
+      toast.error("Não foi possível processar a imagem.");
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleImageFile(e.dataTransfer.files[0] ?? null);
+  };
+
+  const resetForm = () => {
+    setName("");
+    setRole("");
+    setPhotoUrl("");
+  };
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["members"],
@@ -49,15 +120,10 @@ const Membros = () => {
   });
 
   const addMemberMutation = useMutation({
-    mutationFn: () => {
-      const token = getToken()!;
-      return addMember(name, role, photoUrl, token);
-    },
+    mutationFn: () => addMember(name, role, photoUrl, getToken()!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
-      setName("");
-      setRole("");
-      setPhotoUrl("");
+      resetForm();
       setOpen(false);
       toast.success("Membro adicionado com sucesso!");
     },
@@ -94,7 +160,7 @@ const Membros = () => {
         <div className="flex justify-center gap-3 mb-10">
           {isAdmin ? (
             <>
-              <Dialog open={open} onOpenChange={setOpen}>
+              <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
                 <DialogTrigger asChild>
                   <Button className="gap-2">
                     <UserPlus size={18} />
@@ -106,6 +172,53 @@ const Membros = () => {
                     <DialogTitle className="font-display tracking-wide">Novo Membro</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pt-2">
+
+                    {/* Photo drop zone */}
+                    <div className="space-y-2">
+                      <Label>Foto (opcional)</Label>
+                      <div
+                        onClick={() => !photoUrl && fileInputRef.current?.click()}
+                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={handleDrop}
+                        className={`relative flex flex-col items-center justify-center rounded-md border-2 border-dashed transition-colors
+                          ${photoUrl ? "border-primary/40 p-1" : "cursor-pointer p-6 hover:border-primary/60"}
+                          ${isDragging ? "border-primary bg-primary/10" : "border-border"}`}
+                      >
+                        {photoUrl ? (
+                          <>
+                            <img
+                              src={photoUrl}
+                              alt="Preview"
+                              className="max-h-40 rounded object-contain cursor-pointer"
+                              onClick={() => fileInputRef.current?.click()}
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setPhotoUrl(""); }}
+                              className="absolute top-1 right-1 rounded-full bg-background/80 p-0.5 text-muted-foreground hover:text-destructive"
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <ImagePlus size={28} className="mb-2 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground text-center">
+                              Arraste, <kbd className="rounded bg-secondary px-1 py-0.5 text-xs">Ctrl+V</kbd> ou clique para adicionar
+                            </p>
+                          </>
+                        )}
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageFile(e.target.files?.[0] ?? null)}
+                      />
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="name">Nome</Label>
                       <Input
@@ -127,15 +240,6 @@ const Membros = () => {
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="photo_url">Foto (URL — opcional)</Label>
-                      <Input
-                        id="photo_url"
-                        placeholder="https://i.imgur.com/exemplo.jpg"
-                        value={photoUrl}
-                        onChange={(e) => setPhotoUrl(e.target.value)}
-                      />
                     </div>
                     <Button
                       className="w-full"
