@@ -41,9 +41,9 @@ export async function deleteMember(id: string, token: string): Promise<void> {
 
 export async function login(
   username: string,
-  password_hash: string
+  password: string
 ): Promise<{ token: string; expires_at: string }> {
-  const data = await apiFetch({ action: "login", username, password_hash });
+  const data = await apiFetch({ action: "login", username, password });
   return { token: data.token as string, expires_at: data.expires_at as string };
 }
 

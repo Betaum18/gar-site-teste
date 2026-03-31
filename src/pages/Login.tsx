@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { login } from "@/services/api";
-import { hashPassword, isLoggedIn, saveSession } from "@/services/auth";
+import { isLoggedIn, saveSession } from "@/services/auth";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -22,8 +22,7 @@ const Login = () => {
     if (!username || !password || loading) return;
     setLoading(true);
     try {
-      const hash = await hashPassword(password);
-      const { token, expires_at } = await login(username, hash);
+      const { token, expires_at } = await login(username, password);
       saveSession(token, expires_at);
       toast.success("Login realizado!");
       navigate("/membros", { replace: true });

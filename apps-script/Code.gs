@@ -13,10 +13,8 @@
  *
  * Estrutura da planilha:
  *   Aba "Membros": id | name | role | photo_url | display_order | created_at
- *   Aba "Config":  key | value  (linhas: username | admin ; password_hash | <sha256>)
+ *   Aba "Config":  key | value  (linhas: username | admin ; password | suasenha)
  *   Aba "Sessions": token | expires_at
- *
- * Para gerar o password_hash, use: https://emn178.github.io/online-tools/sha256.html
  */
 
 var SS = SpreadsheetApp.getActiveSpreadsheet();
@@ -128,12 +126,12 @@ function deleteMember(params) {
 
 function loginHandler(params) {
   var username = (params.username || "").trim();
-  var password_hash = (params.password_hash || "").trim();
+  var password = (params.password || "").trim();
 
-  if (!username || !password_hash) return { error: "Credenciais ausentes" };
+  if (!username || !password) return { error: "Credenciais ausentes" };
 
   var config = getConfig();
-  if (config.username !== username || config.password_hash !== password_hash) {
+  if (config.username !== username || config.password !== password) {
     return { error: "Credenciais inválidas" };
   }
 
