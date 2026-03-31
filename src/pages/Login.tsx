@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { login } from "@/services/api";
-import { isLoggedIn, saveSession } from "@/services/auth";
+import { isLoggedIn, isAdmin, saveSession } from "@/services/auth";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,7 +15,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isLoggedIn()) navigate("/membros", { replace: true });
+    if (!isLoggedIn()) return;
+    navigate(isAdmin() ? "/membros" : "/metas", { replace: true });
   }, [navigate]);
 
   const handleSubmit = async () => {
@@ -25,7 +26,7 @@ const Login = () => {
       const { token, expires_at, user_type, user_id, user_name } = await login(username, password);
       saveSession(token, expires_at, user_type, user_id, user_name);
       toast.success("Login realizado!");
-      navigate("/membros", { replace: true });
+      navigate(user_type === "admin" ? "/membros" : "/metas", { replace: true });
     } catch {
       toast.error("Credenciais inválidas.");
     } finally {
@@ -39,7 +40,7 @@ const Login = () => {
         <div className="text-center">
           <LogIn className="mx-auto mb-3 text-primary" size={36} />
           <h1 className="font-display text-2xl font-bold tracking-widest text-primary">LOGIN</h1>
-          <p className="text-sm text-muted-foreground mt-1">Área Administrativa</p>
+          <p className="text-sm text-muted-foreground mt-1">Acesso ao sistema</p>
         </div>
         <div className="space-y-4">
           <div className="space-y-2">

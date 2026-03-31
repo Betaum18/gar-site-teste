@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, LogIn, LogOut } from "lucide-react";
 import garLogo from "@/assets/gar-logo.png";
+import { isLoggedIn, getUserName, getToken, clearSession } from "@/services/auth";
+import { logout } from "@/services/api";
 
 const navItems = [
   { label: "Início", path: "/" },
@@ -16,6 +18,21 @@ const navItems = [
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Re-reads on every render (re-renders on route change via useLocation)
+  const loggedIn = isLoggedIn();
+  const userName = getUserName();
+
+  const handleLogout = async () => {
+    const token = getToken();
+    if (token) {
+      try { await logout(token); } catch { /* ignore */ }
+    }
+    clearSession();
+    setOpen(false);
+    navigate("/");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -42,6 +59,31 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+
+          {/* Auth button */}
+          {loggedIn ? (
+            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-border">
+              <span className="text-xs text-muted-foreground font-display tracking-wide">
+                {userName}
+              </span>
+              <button
+                onClick={handleLogout}
+                title="Sair"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-destructive transition-colors"
+              >
+                <LogOut size={14} />
+                Sair
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="flex items-center gap-1.5 ml-2 px-3 py-1.5 rounded-md text-sm font-medium border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+            >
+              <LogIn size={15} />
+              Entrar
+            </Link>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -70,6 +112,30 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+
+          {/* Mobile auth */}
+          {loggedIn ? (
+            <>
+              <div className="px-6 py-2 text-xs text-muted-foreground border-t border-border font-display tracking-wide">
+                {userName}
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-6 py-3 text-sm font-medium text-destructive hover:bg-secondary transition-colors"
+              >
+                Sair
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-6 py-3 text-sm font-medium text-primary border-t border-border hover:bg-secondary transition-colors"
+            >
+              <LogIn size={15} />
+              Entrar
+            </Link>
+          )}
         </div>
       )}
     </nav>
