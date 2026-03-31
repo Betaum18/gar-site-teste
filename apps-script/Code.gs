@@ -83,6 +83,7 @@ function addMember(params) {
   var photo_url = (params.photo_url || "").trim();
   if (!name || !role) return { error: "name e role são obrigatórios" };
   var sheet = SS.getSheetByName("Membros");
+  if (!sheet) return { error: "Aba 'Membros' não encontrada na planilha" };
   var display_order = Math.max(0, sheet.getLastRow() - 1);
   var id  = Utilities.getUuid();
   var now = new Date().toISOString();
@@ -96,6 +97,7 @@ function deleteMember(params) {
   var id = params.id;
   if (!id) return { error: "id é obrigatório" };
   var sheet = SS.getSheetByName("Membros");
+  if (!sheet) return { error: "Aba 'Membros' não encontrada na planilha" };
   var data = sheet.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][0]) === String(id)) { sheet.deleteRow(i + 1); return { success: true }; }
