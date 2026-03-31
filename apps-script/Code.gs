@@ -15,7 +15,7 @@
  *   "Membros":     id | name | role | photo_url | display_order | created_at
  *   "Config":      key | value  (username | admin ; password | suasenha)
  *   "Sessions":    token | expires_at | user_type | user_id | user_name
- *   "Usuarios":    id | member_id | member_name | username | password | created_at
+ *   "Usuarios":    id | member_id | member_name | username | password | user_type | created_at
  *   "Ocorrencias": id | member_id | member_name | descricao | photo_url | created_at
  */
 
@@ -113,7 +113,7 @@ function getUsers(params) {
   var sheet = SS.getSheetByName("Usuarios");
   if (!sheet || sheet.getLastRow() < 2) return { users: [] };
   var data = sheet.getDataRange().getValues();
-  var headers = data[0]; // id | member_id | member_name | username | password | created_at
+  var headers = data[0]; // id | member_id | member_name | username | password | user_type | created_at
   var users = [];
   for (var i = 1; i < data.length; i++) {
     if (!data[i][0]) continue;
@@ -143,10 +143,11 @@ function addUser(params) {
     }
   }
 
+  var user_type = (params.user_type === "admin") ? "admin" : "member";
   var id  = Utilities.getUuid();
   var now = new Date().toISOString();
-  sheet.appendRow([id, member_id, member_name, username, password, now]);
-  return { success: true, user: { id: id, member_id: member_id, member_name: member_name, username: username, created_at: now } };
+  sheet.appendRow([id, member_id, member_name, username, password, user_type, now]);
+  return { success: true, user: { id: id, member_id: member_id, member_name: member_name, username: username, user_type: user_type, created_at: now } };
 }
 
 function deleteUser(params) {
@@ -273,7 +274,8 @@ function loginHandler(params) {
     // colunas: id | member_id | member_name | username | password | created_at
     for (var i = 1; i < uData.length; i++) {
       if (String(uData[i][3]) === username && String(uData[i][4]) === password) {
-        return createSession("member", String(uData[i][1]), String(uData[i][2]));
+        var uType = String(uData[i][5] || "member");
+        return createSession(uType, String(uData[i][1]), String(uData[i][2]));
       }
     }
   }

@@ -14,6 +14,7 @@ export interface UserEntry {
   member_id: string;
   member_name: string;
   username: string;
+  user_type: string;
   created_at: string;
 }
 
@@ -70,9 +71,9 @@ export async function getUsers(token: string): Promise<UserEntry[]> {
 }
 
 export async function addUser(
-  token: string, member_id: string, member_name: string, username: string, password: string
+  token: string, member_id: string, member_name: string, username: string, password: string, user_type: string
 ): Promise<UserEntry> {
-  const data = await apiFetch({ action: "addUser", token, member_id, member_name, username, password });
+  const data = await apiFetch({ action: "addUser", token, member_id, member_name, username, password, user_type });
   return data.user as UserEntry;
 }
 

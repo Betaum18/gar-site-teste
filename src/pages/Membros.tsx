@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserPlus, Trash2, LogOut, Lock, ImagePlus, X } from "lucide-react";
+import { UserPlus, Trash2, LogOut, Lock, ImagePlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getMembers, addMember, deleteMember, logout } from "@/services/api";
 import { isAdmin, getToken, clearSession } from "@/services/auth";
+import { uploadToImgbb } from "@/services/imgbb";
 
 const ROLES = [
   "COMANDO",
@@ -38,7 +39,7 @@ async function compressImage(blob: Blob): Promise<string> {
     const img = new Image();
     const url = URL.createObjectURL(blob);
     img.onload = () => {
-      const MAX = 80;
+      const MAX = 400;
       let { width, height } = img;
       if (width > height) {
         if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
@@ -50,7 +51,7 @@ async function compressImage(blob: Blob): Promise<string> {
       canvas.height = height;
       canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.6));
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
     };
     img.onerror = reject;
     img.src = url;
@@ -65,9 +66,28 @@ const Membros = () => {
   const [role, setRole] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const userIsAdmin = isAdmin();
+
+  const handleImageFile = async (file: File | Blob | null) => {
+    if (!file) return;
+    if (file instanceof File && !file.type.startsWith("image/")) {
+      toast.error("Arquivo não é uma imagem.");
+      return;
+    }
+    try {
+      setUploadingPhoto(true);
+      const dataUrl = await compressImage(file);
+      const url = await uploadToImgbb(dataUrl);
+      setPhotoUrl(url);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Erro ao fazer upload da imagem.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   // Ctrl+V paste listener (only when dialog is open)
   useEffect(() => {
@@ -78,29 +98,11 @@ const Membros = () => {
       );
       if (!item) return;
       const blob = item.getAsFile();
-      if (!blob) return;
-      try {
-        setPhotoUrl(await compressImage(blob));
-      } catch {
-        toast.error("Não foi possível processar a imagem.");
-      }
+      if (blob) handleImageFile(blob);
     };
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
   }, [open]);
-
-  const handleImageFile = async (file: File | null) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Arquivo não é uma imagem.");
-      return;
-    }
-    try {
-      setPhotoUrl(await compressImage(file));
-    } catch {
-      toast.error("Não foi possível processar a imagem.");
-    }
-  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -177,7 +179,7 @@ const Membros = () => {
                     <div className="space-y-2">
                       <Label>Foto (opcional)</Label>
                       <div
-                        onClick={() => !photoUrl && fileInputRef.current?.click()}
+                        onClick={() => !photoUrl && !uploadingPhoto && fileInputRef.current?.click()}
                         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                         onDragLeave={() => setIsDragging(false)}
                         onDrop={handleDrop}
@@ -185,7 +187,12 @@ const Membros = () => {
                           ${photoUrl ? "border-primary/40 p-1" : "cursor-pointer p-6 hover:border-primary/60"}
                           ${isDragging ? "border-primary bg-primary/10" : "border-border"}`}
                       >
-                        {photoUrl ? (
+                        {uploadingPhoto ? (
+                          <div className="flex flex-col items-center gap-2 py-4">
+                            <Loader2 size={28} className="animate-spin text-primary" />
+                            <p className="text-sm text-muted-foreground">Enviando para ImgBB...</p>
+                          </div>
+                        ) : photoUrl ? (
                           <>
                             <img
                               src={photoUrl}
@@ -243,7 +250,7 @@ const Membros = () => {
                     </div>
                     <Button
                       className="w-full"
-                      disabled={!name || !role || addMemberMutation.isPending}
+                      disabled={!name || !role || addMemberMutation.isPending || uploadingPhoto}
                       onClick={() => addMemberMutation.mutate()}
                     >
                       {addMemberMutation.isPending ? "Salvando..." : "Salvar"}

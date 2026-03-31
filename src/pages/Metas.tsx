@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Trash2, ImagePlus, X, Car } from "lucide-react";
+import { PlusCircle, Trash2, ImagePlus, X, Car, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { addOcorrencia, getOcorrencias, deleteOcorrencia, getMembers } from "@/services/api";
 import { isLoggedIn, isAdmin, getToken, getUserId, getUserName } from "@/services/auth";
+import { uploadToImgbb } from "@/services/imgbb";
 
 function getInitials(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map((n) => n[0]).join("").toUpperCase();
@@ -22,7 +23,7 @@ async function compressImage(blob: Blob): Promise<string> {
     const img = new Image();
     const url = URL.createObjectURL(blob);
     img.onload = () => {
-      const MAX = 80;
+      const MAX = 1200;
       let { width, height } = img;
       if (width > height) {
         if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
@@ -34,7 +35,7 @@ async function compressImage(blob: Blob): Promise<string> {
       canvas.height = height;
       canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.6));
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
     };
     img.onerror = reject;
     img.src = url;
@@ -48,6 +49,7 @@ const Metas = () => {
   const [descricao, setDescricao] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,6 +64,21 @@ const Metas = () => {
   const token     = getToken()!;
   const userIsAdmin = isAdmin();
 
+  const handleImageFile = async (file: File | Blob | null) => {
+    if (!file) return;
+    if (file instanceof File && !file.type.startsWith("image/")) { toast.error("Arquivo não é uma imagem."); return; }
+    try {
+      setUploadingPhoto(true);
+      const dataUrl = await compressImage(file);
+      const url = await uploadToImgbb(dataUrl);
+      setPhotoUrl(url);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Erro ao fazer upload da imagem.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   // Paste listener
   useEffect(() => {
     if (!open) return;
@@ -69,20 +86,11 @@ const Metas = () => {
       const item = Array.from(e.clipboardData?.items ?? []).find((i) => i.type.startsWith("image/"));
       if (!item) return;
       const blob = item.getAsFile();
-      if (!blob) return;
-      try { setPhotoUrl(await compressImage(blob)); }
-      catch { toast.error("Não foi possível processar a imagem."); }
+      if (blob) handleImageFile(blob);
     };
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
   }, [open]);
-
-  const handleImageFile = async (file: File | null) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) { toast.error("Arquivo não é uma imagem."); return; }
-    try { setPhotoUrl(await compressImage(file)); }
-    catch { toast.error("Não foi possível processar a imagem."); }
-  };
 
   const { data: members = [] } = useQuery({
     queryKey: ["members"],
@@ -186,7 +194,7 @@ const Metas = () => {
                 <div className="space-y-2">
                   <Label>Foto da ocorrência (opcional)</Label>
                   <div
-                    onClick={() => !photoUrl && fileInputRef.current?.click()}
+                    onClick={() => !photoUrl && !uploadingPhoto && fileInputRef.current?.click()}
                     onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleImageFile(e.dataTransfer.files[0] ?? null); }}
@@ -194,7 +202,12 @@ const Metas = () => {
                       ${photoUrl ? "border-primary/40 p-1" : "cursor-pointer p-5 hover:border-primary/60"}
                       ${isDragging ? "border-primary bg-primary/10" : "border-border"}`}
                   >
-                    {photoUrl ? (
+                    {uploadingPhoto ? (
+                      <div className="flex flex-col items-center gap-2 py-4">
+                        <Loader2 size={26} className="animate-spin text-primary" />
+                        <p className="text-sm text-muted-foreground">Enviando para ImgBB...</p>
+                      </div>
+                    ) : photoUrl ? (
                       <>
                         <img src={photoUrl} alt="Preview" className="max-h-36 rounded object-contain cursor-pointer" onClick={() => fileInputRef.current?.click()} />
                         <button type="button" onClick={(e) => { e.stopPropagation(); setPhotoUrl(""); }} className="absolute top-1 right-1 rounded-full bg-background/80 p-0.5 text-muted-foreground hover:text-destructive">
@@ -225,7 +238,7 @@ const Metas = () => {
                   />
                 </div>
 
-                <Button className="w-full" disabled={!canSubmit || addOcorrenciaMutation.isPending} onClick={() => addOcorrenciaMutation.mutate()}>
+                <Button className="w-full" disabled={!canSubmit || addOcorrenciaMutation.isPending || uploadingPhoto} onClick={() => addOcorrenciaMutation.mutate()}>
                   {addOcorrenciaMutation.isPending ? "Registrando..." : "Registrar"}
                 </Button>
               </div>
