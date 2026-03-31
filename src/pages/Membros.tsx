@@ -38,7 +38,7 @@ async function compressImage(blob: Blob): Promise<string> {
     const img = new Image();
     const url = URL.createObjectURL(blob);
     img.onload = () => {
-      const MAX = 200;
+      const MAX = 80;
       let { width, height } = img;
       if (width > height) {
         if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
@@ -50,7 +50,7 @@ async function compressImage(blob: Blob): Promise<string> {
       canvas.height = height;
       canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
+      resolve(canvas.toDataURL("image/jpeg", 0.6));
     };
     img.onerror = reject;
     img.src = url;
