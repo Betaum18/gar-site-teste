@@ -141,6 +141,14 @@ export async function deleteOcorrencia(token: string, id: string): Promise<void>
   await apiFetch({ action: "deleteOcorrencia", token, id });
 }
 
+// ---- TROCAR SENHA ----
+
+export async function changePassword(
+  token: string, current_password: string, new_password: string
+): Promise<void> {
+  await apiFetch({ action: "changePassword", token, current_password, new_password });
+}
+
 // ---- CÓDIGO PENAL ----
 
 export interface PenalEntry {

@@ -45,6 +45,7 @@ function handleRequest(e) {
       case "getOcorrencias":   return respond(getOcorrencias(params));
       case "deleteOcorrencia": return respond(deleteOcorrencia(params));
       case "getPenal":         return respond(getPenal());
+      case "changePassword":   return respond(changePassword(params));
       default:                 return respond({ error: "Unknown action: " + action });
     }
   } catch (err) {
@@ -406,6 +407,47 @@ function getConfig() {
     if (data[i][0]) config[String(data[i][0])] = String(data[i][1]);
   }
   return config;
+}
+
+// ---- TROCAR SENHA ----
+
+function changePassword(params) {
+  var session = validateToken(params.token);
+  if (!session.valid) return { error: "Unauthorized" };
+
+  var current_password = (params.current_password || "").trim();
+  var new_password     = (params.new_password     || "").trim();
+  if (!current_password || !new_password) return { error: "Senhas são obrigatórias" };
+  if (new_password.length < 4) return { error: "Nova senha deve ter ao menos 4 caracteres" };
+
+  // Admin da Config sheet (user_id vazio)
+  if (session.user_type === "admin" && !session.user_id) {
+    var config = getConfig();
+    if (config.password !== current_password) return { error: "Senha atual incorreta" };
+    var configSheet = SS.getSheetByName("Config");
+    var configData  = configSheet.getDataRange().getValues();
+    for (var i = 1; i < configData.length; i++) {
+      if (String(configData[i][0]) === "password") {
+        configSheet.getRange(i + 1, 2).setValue(new_password);
+        return { success: true };
+      }
+    }
+    return { error: "Entrada 'password' não encontrada em Config" };
+  }
+
+  // Usuário da aba Usuarios — localiza pelo member_id (coluna 1)
+  var uSheet = SS.getSheetByName("Usuarios");
+  if (!uSheet || uSheet.getLastRow() < 2) return { error: "Usuário não encontrado" };
+  var uData = uSheet.getDataRange().getValues();
+  // colunas: id(0) | member_id(1) | member_name(2) | username(3) | password(4) | user_type(5) | created_at(6)
+  for (var j = 1; j < uData.length; j++) {
+    if (String(uData[j][1]) === String(session.user_id)) {
+      if (String(uData[j][4]) !== current_password) return { error: "Senha atual incorreta" };
+      uSheet.getRange(j + 1, 5).setValue(new_password);
+      return { success: true };
+    }
+  }
+  return { error: "Usuário não encontrado" };
 }
 
 // ---- CÓDIGO PENAL ----
