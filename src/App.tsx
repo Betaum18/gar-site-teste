@@ -15,6 +15,7 @@ import Usuarios from "./pages/Usuarios";
 import Metas from "./pages/Metas";
 import Dashboard from "./pages/Dashboard";
 import Crimes from "./pages/Crimes";
+import CodigoPenal from "./pages/CodigoPenal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/metas" element={<Metas />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/crimes" element={<Crimes />} />
+          <Route path="/codigo-penal" element={<CodigoPenal />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />

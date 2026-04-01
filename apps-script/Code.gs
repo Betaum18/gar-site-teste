@@ -17,6 +17,7 @@
  *   "Sessions":    token | expires_at | user_type | user_id | user_name
  *   "Usuarios":    id | member_id | member_name | username | password | user_type | created_at
  *   "Ocorrencias": id | member_id | member_name | descricao | photo_url | created_at
+ *   "penal":       ARTIGO | CONTRAVENÇÃO | MULTA | PENA | FIANÇA
  */
 
 var SS = SpreadsheetApp.getActiveSpreadsheet();
@@ -43,6 +44,7 @@ function handleRequest(e) {
       case "addOcorrencia":    return respond(addOcorrencia(params));
       case "getOcorrencias":   return respond(getOcorrencias(params));
       case "deleteOcorrencia": return respond(deleteOcorrencia(params));
+      case "getPenal":         return respond(getPenal());
       default:                 return respond({ error: "Unknown action: " + action });
     }
   } catch (err) {
@@ -404,4 +406,23 @@ function getConfig() {
     if (data[i][0]) config[String(data[i][0])] = String(data[i][1]);
   }
   return config;
+}
+
+// ---- CÓDIGO PENAL ----
+
+function getPenal() {
+  var sheet = SS.getSheetByName("penal");
+  if (!sheet || sheet.getLastRow() < 2) return { penal: [] };
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var rows = [];
+  for (var i = 1; i < data.length; i++) {
+    if (!data[i][0] && !data[i][1]) continue;
+    var row = {};
+    for (var j = 0; j < headers.length; j++) {
+      row[headers[j]] = data[i][j] !== undefined ? String(data[i][j]) : "";
+    }
+    rows.push(row);
+  }
+  return { penal: rows };
 }

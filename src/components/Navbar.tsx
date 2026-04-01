@@ -72,6 +72,18 @@ const Navbar = () => {
               Crimes
             </Link>
           )}
+          {loggedIn && (
+            <Link
+              to="/codigo-penal"
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:bg-secondary hover:text-primary ${
+                location.pathname === "/codigo-penal"
+                  ? "text-primary bg-secondary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Código Penal
+            </Link>
+          )}
           {userAdmin && (
             <Link
               to="/usuarios"
@@ -148,6 +160,19 @@ const Navbar = () => {
               }`}
             >
               Crimes
+            </Link>
+          )}
+          {loggedIn && (
+            <Link
+              to="/codigo-penal"
+              onClick={() => setOpen(false)}
+              className={`block px-6 py-3 text-sm font-medium transition-colors hover:bg-secondary ${
+                location.pathname === "/codigo-penal"
+                  ? "text-primary bg-secondary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Código Penal
             </Link>
           )}
           {userAdmin && (

@@ -140,3 +140,18 @@ export async function getOcorrencias(
 export async function deleteOcorrencia(token: string, id: string): Promise<void> {
   await apiFetch({ action: "deleteOcorrencia", token, id });
 }
+
+// ---- CÓDIGO PENAL ----
+
+export interface PenalEntry {
+  ARTIGO: string;
+  "CONTRAVENÇÃO": string;
+  MULTA: string;
+  PENA: string;
+  "FIANÇA": string;
+}
+
+export async function getPenal(): Promise<PenalEntry[]> {
+  const data = await apiFetch({ action: "getPenal" });
+  return (data.penal as PenalEntry[]) ?? [];
+}
