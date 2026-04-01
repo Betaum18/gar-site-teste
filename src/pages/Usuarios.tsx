@@ -101,8 +101,9 @@ const Usuarios = () => {
     onError: (err: Error) => toast.error(err.message || "Erro ao remover usuário."),
   });
 
-  const formatDate = (iso: string) => {
-    try { return new Date(iso).toLocaleDateString("pt-BR"); } catch { return iso; }
+  const formatDate = (raw: string) => {
+    const d = new Date(String(raw));
+    return isNaN(d.getTime()) ? String(raw) : d.toLocaleDateString("pt-BR");
   };
 
   return (

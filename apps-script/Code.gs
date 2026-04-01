@@ -146,7 +146,9 @@ function getUsers(params) {
   for (var i = 1; i < data.length; i++) {
     if (!data[i][0]) continue;
     var u = {};
-    for (var j = 0; j < headers.length; j++) u[headers[j]] = data[i][j];
+    for (var j = 0; j < headers.length; j++) {
+      u[headers[j]] = (data[i][j] instanceof Date) ? data[i][j].toISOString() : data[i][j];
+    }
     delete u.password; // nunca expor senha
     users.push(u);
   }
