@@ -331,7 +331,7 @@ const Membros = () => {
           <p className="text-center text-muted-foreground">Nenhum membro cadastrado ainda.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {members.map((member) => (
+            {members.slice().sort((a, b) => ROLES.indexOf(a.role) - ROLES.indexOf(b.role)).map((member) => (
               <div
                 key={member.id}
                 className="card-tactical border-glow-blue text-center group hover:border-primary/40 transition-all relative"
