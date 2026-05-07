@@ -23,6 +23,7 @@ const ROLES = [
   "PILOTO JÚNIOR",
   "ESTAGIÁRIO",
   "SUPLENTE",
+  "APOSENTADO",
 ];
 
 function getInitials(name: string): string {
